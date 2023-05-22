@@ -1,56 +1,54 @@
-console.log(d3) 
+
 const width = window.innerWidth;
-const height = window.innerHeight;
+const height = window.innerHeight; 
 
-const svg = d3.select('body')
-              .append('svg')
-              .attr("width",width)
-              .attr("height",height);
-
-const renderMask = (selection,id,inverted) => {
-    const mask = selection.append('mask')
-    .attr('id',id)
-
-    mask
-    .append('rect')
+const svg = d3.select('body').append('body').append('svg')
     .attr('width',width)
     .attr('height',height)
-    .attr('fill', inverted ? 'black' : 'white')
+
+    let t = 0;
+
+    setInterval(() => {
+        const data = d3.range(15).map((d,i) => ({
+            x: d*60 + 50,
+            y: 250 + Math.sin(t+d*0.5)*220,
+            r: 20,
+        }))
+        
+      svg
+        .selectAll('circle').data(data)
+        .data(data)
+        .join('circle')
+        .attr('r',d => d.r)
+        .attr('cx',d => d.x) 
+        .attr('cy', d => d.y) 
+        
+    
+    svg
+        .selectAll('line')
+        .data(data)
+        .join('line')
+        .attr('x1',d => d.x)
+        .attr('y1',d => d.y)
+        .attr('x2',(d,i) => {
+            const nextElement = data[i+1] 
+            if(nextElement){
+                return nextElement.x;
+            }
+            return d.x;
+        })
+        .attr('y2',(d,i) => {
+            const nextElement = data[i+1]
+            if(nextElement){
+                return nextElement.y;
+            }
+            return d.y;
+        })
+        .attr('stroke-width',5)
+        .attr('stroke','red')
+
+    t+=0.01
+    console.log(t)
+    },1000/60)
 
 
-    mask.selectAll('g')
-        .data(d3.range(d3.symbols.length))
-        .join(enter => 
-            enter
-                .append('g')
-                .append('path')
-                .attr('transform',d => `translate(${d*200},${height/2})`)
-                .attr('d', d => d3.symbol(d3.symbols[d],10000)())
-                .attr('fill',inverted ? 'white' : 'black')
-        )
-}
-
-svg.call(renderMask,'circle-mask', true)
-svg.call(renderMask,'circle-mask-2', false)
-
-
-const n = 100;
-
-
-svg.append('g')
-    .selectAll('rect')
-    .data(d3.range(n))
-    .join('rect')
-        .attr('y',(d) => d*20)
-        .attr('width',width)
-        .attr('height',10)
-        .attr('mask','url(#circle-mask)')
-
-svg.append('g')
-    .selectAll('rect')
-    .data(d3.range(n))
-    .join('rect')
-        .attr('x',d => d*20)
-        .attr('width',10)
-        .attr('height',height)
-        .attr('mask','url(#circle-mask-2)')
