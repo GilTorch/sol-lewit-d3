@@ -1,54 +1,75 @@
+const { select, scaleLinear, csv, extent, axisLeft, axisBottom } = d3
 
 const width = window.innerWidth;
 const height = window.innerHeight; 
 
-const svg = d3.select('body').append('body').append('svg')
-    .attr('width',width)
-    .attr('height',height)
+const csvUrl = [
+"https://gist.githubusercontent.com/",
+"curran/",
+"a08a1080b88344b0c8a7/",
+"raw/0e7a9b0a5d22642a06d3d5b9bcbad9890c8ee534/",
+"iris.csv"
+].join('')
 
-    let t = 0;
+const parseRow = (row) => {
+    const columns = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width', 'species']
+    columns.forEach(column => {
+        if(column != "species"){
+            row[column] = +row[column]
+        }
+    })
+    return row
+}
 
-    setInterval(() => {
-        const data = d3.range(15).map((d,i) => ({
-            x: d*60 + 50,
-            y: 250 + Math.sin(t+d*0.5)*220,
-            r: 20,
-        }))
-        
-      svg
-        .selectAll('circle').data(data)
-        .data(data)
-        .join('circle')
-        .attr('r',d => d.r)
-        .attr('cx',d => d.x) 
-        .attr('cy', d => d.y) 
-        
-    
-    svg
-        .selectAll('line')
-        .data(data)
-        .join('line')
-        .attr('x1',d => d.x)
-        .attr('y1',d => d.y)
-        .attr('x2',(d,i) => {
-            const nextElement = data[i+1] 
-            if(nextElement){
-                return nextElement.x;
-            }
-            return d.x;
-        })
-        .attr('y2',(d,i) => {
-            const nextElement = data[i+1]
-            if(nextElement){
-                return nextElement.y;
-            }
-            return d.y;
-        })
-        .attr('stroke-width',5)
-        .attr('stroke','red')
+const svg = select('body')
+.append('svg')
+.attr('width',width)
+.attr('height', height)
 
-    t+=0.01
-    console.log(t)
-    },1000/60)
+const margin = {
+    top: 20, 
+    right: 20,
+    bottom: 20, 
+    left: 50, 
+}
 
+const xValue = d => d.petal_length;
+const yValue = d => d.sepal_length; 
 
+const main = async () => {
+  const data = await csv(csvUrl, parseRow)
+  const xScale = scaleLinear() 
+    .domain(extent(data, xValue))
+    .range([margin.left,width - margin.right])
+
+  const yScale = scaleLinear() 
+    .domain(extent(data, yValue))
+    .range([height - margin.bottom,margin.top])
+
+ const marks = data.map(d => ({
+    x: xScale(xValue(d)),
+    y: yScale(yValue(d))
+ }))
+
+ console.table(marks)
+
+  svg
+    .selectAll('circle')
+    .data(marks)
+    .join('circle') 
+    .attr('cx', mark => mark.x)
+    .attr('cy', mark => mark.y)
+    .attr('r', 5)
+
+  svg
+    .append('g')
+    .attr('transform', `translate(${margin.left},0)`)
+    .call(axisLeft(yScale))
+
+  svg
+    .append('g')
+    .attr('transform', `translate(0,${height - margin.bottom})`)
+    .call(axisBottom(xScale))
+}
+
+main()
